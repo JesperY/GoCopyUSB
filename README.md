@@ -16,4 +16,26 @@
 | qt     | 提供GUI界面                                                  |
 
 ## 四、项目文件结构
-
+```
+MyBackupApp/
+│
+├── main.go              # 程序主入口，设置和启动服务
+├── backend/
+│   ├── usb.go           # 用于检测USB事件的代码
+│   ├── backup.go        # 处理文件备份逻辑的代码
+│   └── config.go        # 配置处理代码
+│
+├── frontend/
+│   ├── mainwindow.ui    # QT界面设计文件
+│   ├── mainwindow.go    # 界面逻辑处理
+│   └── resources.qrc    # QT资源文件，例如图标和其他媒体
+│
+├── go.mod               # Go模块描述文件
+├── go.sum               # Go模块依赖锁定文件
+└── assets/
+└── icon.png         # 应用图标等静态资源
+```
+## 五、v0.1预期功能
+- 最基本的自动备份功能
+- 基础的UI界面
+- 用户选择备份目录
