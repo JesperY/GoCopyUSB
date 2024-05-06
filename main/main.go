@@ -82,13 +82,19 @@ func main() {
 	// AND TargetInstance.DriveType = 2 进一步过滤，TargetInstance.DriveTyp=2 指定可移动磁盘
 	// 需要注意 __InstanceCreationEvent 是一个临时事件，只有在系统动态创建对象时，WMI 创建一个事件实例描述新的创建，并不会长时间存在
 	queryString := "SELECT * FROM __InstanceCreationEvent WITHIN 2 WHERE TargetInstance ISA 'Win32_LogicalDisk' AND TargetInstance.DriveType = 2"
+	// 通过 CallMethod 调用 ExecNotificationQuery 方法
+	// ExecNotificationQuery 用于执行一个通知查询，通过指定一个 WQL 语句，订阅对应的事件
+	// 返回一个 SWbemEventSource 对象，允许程序处理收到的事件
 	resultRaw, err := oleutil.CallMethod(service, "ExecNotificationQuery", queryString)
 	if err != nil {
 		log.Fatal(err)
 	}
+	// 转为 IDispatch 对象
 	result := resultRaw.ToIDispatch()
+	// 延迟释放
 	defer result.Release()
 
+	// 永久循环执行事件处理
 	fmt.Println("Listening for USB drive insertion events...")
 	for {
 		handleEvent(result)
@@ -97,10 +103,12 @@ func main() {
 
 // copyFile copies a single file from src to dst
 func copyFile(src, dst string) error {
+	// 打开 src 指定的文件
 	sourceFile, err := os.Open(src)
 	if err != nil {
 		return err
 	}
+	// 延迟关闭
 	defer func(sourceFile *os.File) {
 		err := sourceFile.Close()
 		if err != nil {
@@ -108,10 +116,12 @@ func copyFile(src, dst string) error {
 		}
 	}(sourceFile)
 
+	// 创建目标文件
 	destinationFile, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
+	// 延迟关闭
 	defer func(destinationFile *os.File) {
 		err := destinationFile.Close()
 		if err != nil {
@@ -119,12 +129,15 @@ func copyFile(src, dst string) error {
 		}
 	}(destinationFile)
 
+	// 执行复制
 	_, err = io.Copy(destinationFile, sourceFile)
 	return err
 }
 
 // handleEvent 插入U盘时的处理逻辑
 func handleEvent(result *ole.IDispatch) {
+	// 调用 SWbemEventSource 的 NextEvent 方法，获取下一个事件
+	// 返回一个事件的 COM 对象
 	eventRaw, err := oleutil.CallMethod(result, "NextEvent", nil)
 	if err != nil {
 		log.Fatal(err)
@@ -132,10 +145,17 @@ func handleEvent(result *ole.IDispatch) {
 	event := eventRaw.ToIDispatch()
 	defer event.Release()
 
+	// MustGetProperty 用于获取 COM 对象的属性
+	// 此处尝试从 event 中获取指定的 TargetInstance 属性
+	// 该方法如果获取失败将会引发 panic
+	// 如果不能保证一定可以获取到属性，应该考虑使用 oleutil.GetProperty 并适当处理错误
+	// 对于诸如 __InstanceCreationEvent、__InstanceDeletionEvent 等事件，TargetInstance 属性通常包含了引发事件的实例
+	// 此处，如果创建了新的逻辑磁盘，则会指向 Win32_LogicalDisk 实例
 	targetInstance := oleutil.MustGetProperty(event, "TargetInstance")
 	instance := targetInstance.ToIDispatch()
 	defer instance.Release()
 
+	// 获取 instance 的 DeviceID 属性并转为 String
 	deviceId := oleutil.MustGetProperty(instance, "DeviceID").ToString()
 	fmt.Printf("USB Drive inserted: %s\n", deviceId)
 
@@ -143,11 +163,17 @@ func handleEvent(result *ole.IDispatch) {
 	targetPath := `D:\TargetDirectory\`
 
 	// Copy all files and directories from USB drive to target directory
+	// filepath.Walk 可以遍历指定目录下的所有文件和目录
+	// 第一个参数为要遍历的目录，第二个参数为回调函数，每遍历到一个文件或目录就调用一次
+	// 此处使用匿名函数，其功能为将遍历到的文件或目录复制到目标路径下
 	err = filepath.Walk(sourcePath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
+		// 构建 targetFilePath 作为复制的目标路径
+		// TrimPrefix 将 sourcePath 从 path 中去除，只保留 sourcePath 之后的路径字符串，然后拼接到 targetPath
 		targetFilePath := filepath.Join(targetPath, strings.TrimPrefix(path, sourcePath))
+		// 如果遍历到的是目录，则创建对应目录，保持原权限，否则执行赋值操作
 		if info.IsDir() {
 			return os.MkdirAll(targetFilePath, info.Mode())
 		} else {
