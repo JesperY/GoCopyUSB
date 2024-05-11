@@ -6,11 +6,17 @@ import (
 	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget/material"
+	"github.com/JesperY/GoCopyUSB/backEnd"
 	"image/color"
 	"os"
 )
 
 func main() {
+	//UIinit()
+	backEnd.Listen()
+}
+
+func UIinit() {
 	var title string = `USBCopier`
 	var width, height int = 600, 400
 	go func() {
@@ -19,6 +25,7 @@ func main() {
 		ListenEvent(window)
 	}()
 	app.Main()
+
 }
 
 // SetWindowOptions
