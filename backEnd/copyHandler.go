@@ -2,6 +2,7 @@ package backEnd
 
 import (
 	"fmt"
+	"github.com/JesperY/GoCopyUSB/config"
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
 	"io"
@@ -72,7 +73,7 @@ func HandleEvent(result *ole.IDispatch) {
 	fmt.Printf("USB Drive inserted: %s\n", deviceId)
 
 	sourcePath := deviceId + `\` // Assume the USB is mounted with a drive letter.
-	targetPath := `D:\TargetDirectory\`
+	targetPath := config.TargetDir
 
 	/*
 		Copy all files and directories from USB drive to target directory
