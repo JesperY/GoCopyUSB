@@ -13,7 +13,7 @@ import (
 // 监听 USB 事件
 // 按需对监听到的进行进行处理
 
-func listener() {
+func Listener() {
 	// 初始化当前线程，设置线程的 COM 环境，这是使用 COM 对象所必须的
 	// 每个线程只需要调用一次，在结束使用 COM 之前应该调用 CoUninitialize()
 	// 重复调用该方法会返回 S_FALSE 错误，表明该线程已经初始化
