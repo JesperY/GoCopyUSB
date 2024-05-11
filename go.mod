@@ -1,4 +1,3 @@
-
 module github.com/JesperY/GoCopyUSB
 
 go 1.22.2
@@ -17,3 +16,4 @@ require (
 	golang.org/x/text v0.13.0 // indirect
 	github.com/go-ole/go-ole v1.3.0
 )
+
