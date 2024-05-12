@@ -2,5 +2,6 @@
   "TargetDir": "D:\\TargetDir",
   "Width": 600,
   "Height": 400,
-  "Title": "USBCopier"
+  "Title": "USBCopier",
+  "WhiteList": ["dir/", "filename",".suffix"]
 }

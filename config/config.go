@@ -11,6 +11,7 @@ type Config struct {
 	Width     int
 	Height    int
 	Title     string
+	WhiteList []string
 }
 
 var ConfigPtr = &Config{}
@@ -34,7 +35,7 @@ func (configPtr *Config) readConfig() {
 // 将 ConfigPtr 写入 config.json
 func (configPtr *Config) writeConfig() {
 	data, _ := json.MarshalIndent(configPtr, "", "")
-	err := os.WriteFile("config.json", data, 0644)
+	err := os.WriteFile("config/config.json", data, 0644)
 	if err != nil {
 		fmt.Println(err)
 	}
