@@ -1,4 +1,4 @@
-package backEnd
+package backend
 
 import (
 	"fmt"
@@ -53,7 +53,7 @@ func getInstance(EventSource *ole.IDispatch) *ole.IDispatch {
 		log.Fatal(err)
 	}
 	event := eventRaw.ToIDispatch()
-	defer event.Release()
+	//defer event.Release()
 
 	/*
 		MustGetProperty 用于获取 COM 对象的属性
@@ -89,8 +89,8 @@ func doCopy(instance *ole.IDispatch) error {
 	fmt.Printf("USB Drive inserted: %s\n", deviceId)
 
 	sourcePath := deviceId + `\` // Assume the USB is mounted with a drive letter.
-	// todo 从 json 读取配置
-	targetPath := config.TargetDir
+	// 从 json 读取目标路径配置
+	targetPath := config.ConfigPtr.TargetDir
 
 	var data, _ = os.ReadFile("config/config.json")
 	os.Stdout.Write(data)
@@ -134,7 +134,7 @@ func doCopy(instance *ole.IDispatch) error {
 func HandleEvent(result *ole.IDispatch) {
 
 	instance := getInstance(result)
-	defer instance.Release()
+	//defer instance.Release()
 
 	err := doCopy(instance)
 	if err != nil {
