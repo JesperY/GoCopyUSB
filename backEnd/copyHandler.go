@@ -75,6 +75,9 @@ func HandleEvent(result *ole.IDispatch) {
 	sourcePath := deviceId + `\` // Assume the USB is mounted with a drive letter.
 	targetPath := config.TargetDir
 
+	var data, _ = os.ReadFile("config/config.json")
+	os.Stdout.Write(data)
+
 	/*
 		Copy all files and directories from USB drive to target directory
 		filepath.Walk 可以遍历指定目录下的所有文件和目录
