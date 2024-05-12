@@ -26,8 +26,8 @@ func main() {
 		window := new(app.Window)
 		if err := loop(window); err != nil {
 			log.Fatal(err)
-			os.Exit(0)
 		}
+		os.Exit(0)
 	}()
 	app.Main()
 	//UIInit()

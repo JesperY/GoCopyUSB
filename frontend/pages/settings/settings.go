@@ -46,8 +46,14 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 						if err != nil {
 							log.Println("Error selecting folder:", err)
 						} else {
+							if path == "" {
+								_, err := dlgs.Info("路径不可用", "请选择一个有效的文件夹路径。")
+								if err != nil {
+									log.Println("Error displaying dialog:", err)
+								}
+							}
 							config.ConfigPtr.TargetDir = path
-							log.Println(path)
+							config.ConfigPtr.WriteConfig()
 							p.Window.Invalidate()
 						}
 					}
