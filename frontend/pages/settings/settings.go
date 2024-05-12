@@ -16,6 +16,7 @@ import (
 
 type Page struct {
 	chooseDirBtn widget.Clickable
+	setDefault   widget.Bool
 	app.Window
 	*page.Router
 	widget.List
@@ -36,9 +37,11 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 			Alignment: layout.Middle,
 			Axis:      layout.Vertical,
 		}.Layout(gtx,
+			// 介绍文本
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				return alo.DefaultInset.Layout(gtx, material.Body1(th, `感谢使用USBCopier！`).Layout)
 			}),
+			// 当前备份位置和选择按钮
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				return alo.DetailRow{}.Layout(gtx, material.Body1(th, "当前备份位置").Layout, func(gtx layout.Context) layout.Dimensions {
 					if p.chooseDirBtn.Clicked(gtx) {
@@ -53,12 +56,26 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 								}
 							}
 							config.ConfigPtr.TargetDir = path
-							config.ConfigPtr.WriteConfig()
 							p.Window.Invalidate()
 						}
 					}
 					return material.Button(th, &p.chooseDirBtn, config.ConfigPtr.TargetDir).Layout(gtx)
 				})
+			}),
+			// 是否将路径选择写入配置文件以在下次运行时生效
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				return alo.DetailRow{}.Layout(gtx,
+					material.Body1(th, "记住我的路径选择").Layout,
+					func(gtx layout.Context) layout.Dimensions {
+						defer func() {
+							if p.setDefault.Value {
+								config.ConfigPtr.WriteConfig()
+								log.Println("默认文件已经修改trigger")
+							}
+						}()
+						return material.Switch(th, &p.setDefault, "默认路径是否记忆").Layout(gtx)
+					},
+				)
 			}),
 		)
 	})

@@ -55,16 +55,6 @@ func loop(window *app.Window) error {
 
 }
 
-func UIInit() {
-	go func() {
-		window := new(app.Window)
-		SetWindowOptions(window, config.ConfigPtr.Title, config.ConfigPtr.Width, config.ConfigPtr.Height)
-		ListenEvent(window)
-	}()
-	go backend.Listen()
-	app.Main()
-}
-
 // SetWindowOptions
 //
 //	@Description: 设置窗口的各项属性
