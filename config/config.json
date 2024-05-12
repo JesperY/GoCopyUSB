@@ -1,6 +1,6 @@
 {
-  "TargetDir" : "D:\\TargetDirectory",
-  "Width" : 600,
-  "Height" : 400,
-  "Title" : "USBCopier"
+"TargetDir": "D:\\TargetDir",
+"Width": 600,
+"Height": 400,
+"Title": "USBCopier"
 }
