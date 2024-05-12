@@ -8,22 +8,23 @@ import (
 	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget/material"
-	"github.com/JesperY/GoCopyUSB/backEnd"
+	"github.com/JesperY/GoCopyUSB/backend"
 	"github.com/JesperY/GoCopyUSB/config"
 	"image/color"
 )
 
 func main() {
 	UIInit()
+	//backend.Listen()
 }
 
 func UIInit() {
 	go func() {
 		window := new(app.Window)
-		SetWindowOptions(window, config.Title, config.Width, config.Height)
+		SetWindowOptions(window, config.ConfigPtr.Title, config.ConfigPtr.Width, config.ConfigPtr.Height)
 		ListenEvent(window)
 	}()
-	go backEnd.Listen()
+	go backend.Listen()
 	app.Main()
 }
 
@@ -51,9 +52,9 @@ func ListenEvent(window *app.Window) {
 			//todo 点击关闭时程序缩小至托盘
 		case app.FrameEvent:
 			gtx := app.NewContext(&ops, e)
-			// Define an large label with an appropriate text:
+			// Define a large label with an appropriate text:
 			title := material.H6(theme, "USB备份监听已启动")
-			dirText := material.Body1(theme, fmt.Sprintf(`当前备份目标目录为%s`, config.TargetDir))
+			dirText := material.Body1(theme, fmt.Sprintf(`当前备份目标目录为%s`, config.ConfigPtr.TargetDir))
 
 			// Change the color of the label.
 			maroon := color.NRGBA{R: 127, G: 0, B: 0, A: 255}

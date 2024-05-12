@@ -1,4 +1,4 @@
-package backEnd
+package backend
 
 import (
 	"fmt"
@@ -6,6 +6,11 @@ import (
 	"github.com/go-ole/go-ole/oleutil"
 	"log"
 )
+
+//func getLogicalDiskEventSource() *ole.IDispatch {
+//
+//	return result
+//}
 
 func Listen() {
 	/*
@@ -95,13 +100,12 @@ func Listen() {
 		log.Fatal(err)
 	}
 	// 转为 IDispatch 对象
-	result := resultRaw.ToIDispatch()
+	eventSource := resultRaw.ToIDispatch()
 	// 延迟释放
-	defer result.Release()
-
+	defer eventSource.Release()
 	// 永久循环执行事件处理
 	fmt.Println("Listening for USB drive insertion events...")
 	for {
-		HandleEvent(result)
+		HandleEvent(eventSource)
 	}
 }
