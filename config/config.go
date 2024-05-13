@@ -11,6 +11,7 @@ type Config struct {
 	Width     int
 	Height    int
 	Title     string
+	WhiteList []string
 }
 
 var ConfigPtr = &Config{}

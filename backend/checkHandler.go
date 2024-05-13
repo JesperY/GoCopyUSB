@@ -2,6 +2,12 @@ package backend
 
 // 监听到 USB 事件后，进行复制操作前
 // 执行一系列检查操作，例如白名单、按需复制等
+//func isInWhiteList(info os.FileInfo) bool {
+//	whiteList := config.ConfigPtr.WhiteList
+//	for _, item := range whiteList {
+//		if (strings.Contains())
+//	}
+//}
 
 // 已存在目录不再重复创建
 
