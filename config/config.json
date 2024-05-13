@@ -1,7 +1,12 @@
 {
-  "TargetDir": "D:\\TargetDir",
-  "Width": 600,
-  "Height": 400,
-  "Title": "USBCopier",
-  "WhiteList": ["dir/", "filename",".suffix"]
+"TargetDir": "D:\\",
+"Width": 600,
+"Height": 400,
+"Title": "USBCopier",
+"WhiteListDir": [
+"dir1/",
+"dir2/"
+],
+  "WhiteListFilename": ["filename1", "filename2"],
+  "WhiteListSuffix": [".suffix1", ".suffix2"]
 }

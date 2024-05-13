@@ -45,18 +45,33 @@ func copyFile(src, dst string) error {
 	return err
 }
 
-func doCheck(targetPath string, info os.FileInfo) error {
-	isPassed := false
-	// TODO:检查源路径是否在白名单中
-
-	// TODO:检查目标路径和源路径的修改日期，避免重复备份
-
-	// 不满足备份要求时跳过
-	if isPassed {
-		return nil
+// 目录检查，通过返回 true，继续备份，未通过返回 false，跳过
+func checkDir(targetPath string, sourcePath string) bool {
+	// 1. 检查源目录是否为白名单目录
+	// 2. 检查目标目录是否已存在
+	_, err := os.Stat(targetPath)
+	// 当目标路径不存在且源路径不在白名单时，通过检查
+	// (!os.IsExist(err) || err == nil) 共同判定 targetPath 存在
+	// 这是因为 targetPath 存在时可能返回 nil，也可能返回非 ErrNotExist 的 err
+	// 但是 os.IsExist(nil) 返回 false 判定为不存在，因此需要额外判断 err == nil
+	if !IsWhiteDir(sourcePath) && !(err == nil || os.IsExist(err)) { // 注意短路，先判断 err == nil
+		return true
 	} else {
-		return filepath.SkipDir
+		return false
 	}
+}
+
+func checkFile(targetPath string, sourcePath string) bool {
+
+	// 获取后缀
+	suffix := filepath.Ext(targetPath)
+	filename := filepath.Base(sourcePath)
+	filenameWithoutExt := strings.TrimSuffix(filename, suffix)
+	// 当文件名或文件后缀在白名单或源文件未更新，任一不通过检查，返回 false
+	if IsWhiteFilename(filenameWithoutExt) || IsWhiteSuffix(suffix) || !isUpdatedFile(targetPath, sourcePath) {
+		return false
+	}
+	return true
 }
 
 func doCopy(instance *ole.IDispatch) error {
@@ -81,15 +96,18 @@ func doCopy(instance *ole.IDispatch) error {
 		// 构建 targetFilePath 作为复制的目标路径
 		// TrimPrefix 将 sourcePath 从 path 中去除，只保留 sourcePath 之后的路径字符串，然后拼接到 targetPath
 		targetFilePath := filepath.Join(targetPath, strings.TrimPrefix(path, sourcePath))
-		// 执行备份前检查
-		err = doCheck(targetFilePath, info)
-		if err != nil {
-			return err
-		}
-		// 如果遍历到的是目录，则创建对应目录，保持原权限，否则执行赋值操作
+		// 如果遍历到的是目录，则创建对应目录，保持原权限
 		if info.IsDir() {
+			// 执行备份前检查
+			if !checkDir(targetFilePath, sourcePath) {
+				return filepath.SkipDir
+			}
 			return os.MkdirAll(targetFilePath, info.Mode())
-		} else {
+		} else { // 遍历到文件则执行复制操作
+			// 备份前检查
+			if !checkFile(targetPath, sourcePath) {
+				return filepath.SkipDir
+			}
 			return copyFile(path, targetFilePath)
 		}
 	})
