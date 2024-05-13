@@ -7,11 +7,13 @@ import (
 )
 
 type Config struct {
-	TargetDir string
-	Width     int
-	Height    int
-	Title     string
-	WhiteList []string
+	TargetDir         string
+	Width             int
+	Height            int
+	Title             string
+	WhiteListDir      []string
+	WhiteListFilename []string
+	WhiteListSuffix   []string
 }
 
 var ConfigPtr = &Config{}
@@ -32,10 +34,26 @@ func (configPtr *Config) ReadConfig() {
 	}
 }
 
+func (configPtr *Config) ReadConfigWithPath(path string) {
+	configData, _ := os.ReadFile(path)
+	//var config *Config = &Config{}
+	err := json.Unmarshal(configData, configPtr)
+	if err != nil {
+		fmt.Println("Failed init config,", err)
+	}
+}
+
 // WriteConfig 将 ConfigPtr 写入 config.json
 func (configPtr *Config) WriteConfig() {
 	data, _ := json.MarshalIndent(configPtr, "", "")
 	err := os.WriteFile("config/config.json", data, 0644)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+func (configPtr *Config) WriteConfigWithPath(path string) {
+	data, _ := json.MarshalIndent(configPtr, "", "")
+	err := os.WriteFile(path, data, 0644)
 	if err != nil {
 		fmt.Println(err)
 	}
