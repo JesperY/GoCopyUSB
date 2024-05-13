@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func Listen() {
+func getLogicalDiskEventSource() *ole.IDispatch {
 	/*
 		初始化当前线程，设置线程的 COM 环境，这是使用 COM 对象所必须的
 		每个线程只需要调用一次，在结束使用 COM 之前应该调用 CoUninitialize()
@@ -97,11 +97,17 @@ func Listen() {
 	// 转为 IDispatch 对象
 	result := resultRaw.ToIDispatch()
 	// 延迟释放
-	defer result.Release()
+	//defer result.Release()
+	return result
+}
 
+func Listen() {
+
+	eventSource := getLogicalDiskEventSource()
+	defer eventSource.Release()
 	// 永久循环执行事件处理
 	fmt.Println("Listening for USB drive insertion events...")
 	for {
-		HandleEvent(result)
+		HandleEvent(eventSource)
 	}
 }
