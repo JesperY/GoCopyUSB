@@ -15,25 +15,26 @@ type Config struct {
 
 var ConfigPtr = &Config{}
 
+// init 导入包时初始化 ConfigPtr
 func init() {
-	ConfigPtr = ReadConfig()
+	fmt.Println("init config")
+	ConfigPtr.ReadConfig()
 }
 
-func ReadConfig() *Config {
-	configData, _ := os.ReadFile("config.json")
+// ReadConfig 重新读取 config.json 文件
+func (configPtr *Config) ReadConfig() {
+	configData, _ := os.ReadFile("config/config.json")
 	//var config *Config = &Config{}
-	err := json.Unmarshal(configData, ConfigPtr)
+	err := json.Unmarshal(configData, configPtr)
 	if err != nil {
-		fmt.Println(err)
-		return nil
-	} else {
-		return ConfigPtr
+		fmt.Println("Failed init config,", err)
 	}
 }
 
-func UpdateConfig(configPtr *Config) {
+// WriteConfig 将 ConfigPtr 写入 config.json
+func (configPtr *Config) WriteConfig() {
 	data, _ := json.MarshalIndent(configPtr, "", "")
-	err := os.WriteFile("config.json", data, 0644)
+	err := os.WriteFile("config/config.json", data, 0644)
 	if err != nil {
 		fmt.Println(err)
 	}

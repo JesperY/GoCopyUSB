@@ -1,30 +1,58 @@
-package test
+package main
 
 import (
+	"flag"
 	"fmt"
 	"gioui.org/app"
+	"gioui.org/font/gofont"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget/material"
-	"github.com/JesperY/GoCopyUSB/backEnd"
+	"github.com/JesperY/GoCopyUSB/backend"
 	"github.com/JesperY/GoCopyUSB/config"
+	page "github.com/JesperY/GoCopyUSB/frontend/pages"
+	"github.com/JesperY/GoCopyUSB/frontend/pages/settings"
 	"image/color"
+	"log"
+	"os"
 )
 
 func main() {
-	UIInit()
-}
-
-func UIInit() {
+	flag.Parse()
+	go backend.Listen()
 	go func() {
 		window := new(app.Window)
-		SetWindowOptions(window, config.Title, config.Width, config.Height)
-		ListenEvent(window)
+		if err := loop(window); err != nil {
+			log.Fatal(err)
+		}
+		os.Exit(0)
 	}()
-	go backEnd.Listen()
 	app.Main()
+	//UIInit()
+	//backend.Listen()
+}
+
+func loop(window *app.Window) error {
+	th := material.NewTheme()
+	th.Shaper = text.NewShaper(text.WithCollection(gofont.Collection()))
+	var ops op.Ops
+
+	// 注册路由
+	router := page.NewRouter()
+	router.Register(0, settings.New(&router)) // 设置属性页面
+	for {
+		switch e := window.Event().(type) {
+		case app.DestroyEvent:
+			return e.Err
+		case app.FrameEvent:
+			gtx := app.NewContext(&ops, e)
+			router.Layout(gtx, th)
+			e.Frame(gtx.Ops)
+		}
+	}
+
 }
 
 // SetWindowOptions
@@ -51,9 +79,9 @@ func ListenEvent(window *app.Window) {
 			//todo 点击关闭时程序缩小至托盘
 		case app.FrameEvent:
 			gtx := app.NewContext(&ops, e)
-			// Define an large label with an appropriate text:
+			// Define a large label with an appropriate text:
 			title := material.H6(theme, "USB备份监听已启动")
-			dirText := material.Body1(theme, fmt.Sprintf(`当前备份目标目录为%s`, config.TargetDir))
+			dirText := material.Body1(theme, fmt.Sprintf(`当前备份目标目录为%s`, config.ConfigPtr.TargetDir))
 
 			// Change the color of the label.
 			maroon := color.NRGBA{R: 127, G: 0, B: 0, A: 255}
