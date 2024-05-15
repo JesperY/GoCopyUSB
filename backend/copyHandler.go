@@ -3,13 +3,14 @@ package backend
 import (
 	"fmt"
 	"github.com/JesperY/GoCopyUSB/config"
+	"github.com/JesperY/GoCopyUSB/copylogger"
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // copyFile 向硬盘中拷贝文件
@@ -91,6 +92,7 @@ func doCopy(instance *ole.IDispatch) error {
 	*/
 	err := filepath.Walk(sourcePath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
+			copylogger.SugarLogger.Errorf("Failed walk dir: %v\n", err)
 			return err
 		}
 		// 构建 targetFilePath 作为复制的目标路径
@@ -113,9 +115,11 @@ func doCopy(instance *ole.IDispatch) error {
 	})
 
 	if err != nil {
-		log.Println("Error copying files:", err)
+		copylogger.SugarLogger.Errorf("Failed copy file: %v\n", err)
+		//log.Println("Error copying files:", err)
 	} else {
-		fmt.Println("All files copied successfully from", deviceId)
+		copylogger.SugarLogger.Infof("\"All files copied successfully from %s", deviceId)
+		//fmt.Println("All files copied successfully from", deviceId)
 	}
 	// TODO:优化 error 处理
 	return err
@@ -127,8 +131,8 @@ func HandleEvent(eventSource *ole.IDispatch) {
 	// 返回一个事件的 COM 对象
 	eventRaw, err := oleutil.CallMethod(eventSource, "NextEvent", nil)
 	if err != nil {
-		//log.Fatal(err)
-		fmt.Println("Error getting next event:", err)
+		//fmt.Println("Error getting next event:", err)
+		copylogger.SugarLogger.Errorf("Error getting next USB event: %v", err)
 		return
 	}
 	event := eventRaw.ToIDispatch()
@@ -145,11 +149,13 @@ func HandleEvent(eventSource *ole.IDispatch) {
 	targetInstance := oleutil.MustGetProperty(event, "TargetInstance")
 	instance := targetInstance.ToIDispatch()
 	defer instance.Release()
-
+	if config.ConfigPtr.DelayMinutes > 0 { // 延迟指定的时间后再进行备份
+		time.Sleep(time.Duration(config.ConfigPtr.DelayMinutes) * time.Minute)
+	}
 	err = doCopy(instance)
 	if err != nil {
-		//log.Fatal(err)
-		fmt.Println("Error copying files:", err)
+		//fmt.Println("Error copying files:", err)
+		copylogger.SugarLogger.Errorf("Error copying files: %v", err)
 		return
 	}
 

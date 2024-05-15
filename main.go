@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"gioui.org/app"
 	"gioui.org/font/gofont"
@@ -12,20 +11,19 @@ import (
 	"gioui.org/widget/material"
 	"github.com/JesperY/GoCopyUSB/backend"
 	"github.com/JesperY/GoCopyUSB/config"
+	"github.com/JesperY/GoCopyUSB/copylogger"
 	page "github.com/JesperY/GoCopyUSB/frontend/pages"
 	"github.com/JesperY/GoCopyUSB/frontend/pages/settings"
 	"image/color"
-	"log"
 	"os"
 )
 
 func main() {
-	flag.Parse()
+	defer copylogger.SugarLogger.Sync()
 	go backend.Listen()
 	go func() {
 		window := new(app.Window)
 		if err := loop(window); err != nil {
-			log.Fatal(err)
 		}
 		os.Exit(0)
 	}()
