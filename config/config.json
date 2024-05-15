@@ -3,6 +3,7 @@
 "Width": 600,
 "Height": 400,
 "Title": "USBCopier",
+  "DelayMinutes": 0,
 "WhiteListDir": [
 "dir1/",
 "dir2/"

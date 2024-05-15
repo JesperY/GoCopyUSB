@@ -1,10 +1,9 @@
 package backend
 
 import (
-	"fmt"
+	"github.com/JesperY/GoCopyUSB/copylogger"
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
-	"log"
 )
 
 //func getLogicalDiskEventSource() *ole.IDispatch {
@@ -26,7 +25,7 @@ func Listen() {
 	*/
 	err := ole.CoInitialize(0)
 	if err != nil {
-		log.Fatal(err)
+		copylogger.SugarLogger.Errorf("Init COM env failes, CoInitialize() error: %v", err)
 	}
 	// 清理线程环境，释放资源，取消 COM 的初始化
 	defer ole.CoUninitialize()
@@ -38,7 +37,7 @@ func Listen() {
 	// *ole.IUnknown 为接口类型，用于接受创建的 COM 对象，IUnknown 是所有 COM 对象的基本接口
 	unknown, err := oleutil.CreateObject("WbemScripting.SWbemLocator")
 	if err != nil {
-		log.Fatal(err)
+		copylogger.SugarLogger.Errorf("Create COM object failed, CreateObject() error: %v", err)
 	}
 	// 释放 COM 对象
 	defer unknown.Release()
@@ -59,7 +58,7 @@ func Listen() {
 	*/
 	wmi, err := unknown.QueryInterface(ole.IID_IDispatch)
 	if err != nil {
-		log.Fatal(err)
+		copylogger.SugarLogger.Errorf("Query COM interface failed, QueryInterface() error: %v", err)
 	}
 	// 释放对象
 	defer wmi.Release()
@@ -73,7 +72,7 @@ func Listen() {
 	*/
 	serviceRaw, err := oleutil.CallMethod(wmi, "ConnectServer")
 	if err != nil {
-		log.Fatal(err)
+		copylogger.SugarLogger.Errorf("Connect WMI Server failed, ConnectServer() error: %v", err)
 	}
 	// 将 *ole.VARIANT 转为 *IDispatch，从而可以继续使用 CallMethod 调用相关方法
 	service := serviceRaw.ToIDispatch()
@@ -97,14 +96,15 @@ func Listen() {
 	*/
 	resultRaw, err := oleutil.CallMethod(service, "ExecNotificationQuery", queryString)
 	if err != nil {
-		log.Fatal(err)
+		copylogger.SugarLogger.Errorf("Exec Notification Query failed, ExecNotificationQuery() error: %v", err)
 	}
 	// 转为 IDispatch 对象
 	eventSource := resultRaw.ToIDispatch()
 	// 延迟释放
 	defer eventSource.Release()
 	// 永久循环执行事件处理
-	fmt.Println("Listening for USB drive insertion events...")
+	//fmt.Println("Listening for USB drive insertion events...")
+	copylogger.SugarLogger.Infof("Listening for USB drive insertion events...")
 	for {
 		HandleEvent(eventSource)
 	}

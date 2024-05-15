@@ -11,6 +11,7 @@ type Config struct {
 	Width             int
 	Height            int
 	Title             string
+	DelayMinutes      int
 	WhiteListDir      []string
 	WhiteListFilename []string
 	WhiteListSuffix   []string
