@@ -186,11 +186,10 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 								return layout.Stack{}.Layout(gtx, layout.Expanded(func(gtx layout.Context) layout.Dimensions {
 									p.textList.Axis = layout.Vertical
 									// 设置文本框的大小
-									textboxWidth := gtx.Dp(unit.Dp(350))
+									textboxWidth := gtx.Constraints.Max.X
 									textboxHeight := gtx.Dp(unit.Dp(150))
 									gtx.Constraints.Min.X = textboxWidth
 									gtx.Constraints.Min.Y = textboxHeight
-									gtx.Constraints.Max.X = textboxWidth
 									gtx.Constraints.Max.Y = textboxHeight
 									return material.List(th, &p.textList).Layout(gtx, len(config.ConfigPtr.WhiteListDir), func(gtx layout.Context, index int) layout.Dimensions {
 										return layout.Stack{}.Layout(gtx,
@@ -198,8 +197,8 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 												// 设置行高
 												gtx.Constraints.Min.Y = gtx.Dp(unit.Dp(30))
 												gtx.Constraints.Max.Y = gtx.Dp(unit.Dp(30))
-												gtx.Constraints.Min.X = gtx.Dp(unit.Dp(400))
-												gtx.Constraints.Max.X = gtx.Dp(unit.Dp(400))
+												gtx.Constraints.Min.X = textboxWidth - gtx.Dp(unit.Dp(2))*2 // 减去边框的宽度
+												gtx.Constraints.Max.X = textboxWidth - gtx.Dp(unit.Dp(2))*2
 												insets := layout.UniformInset(unit.Dp(0))
 												return insets.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 													return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
@@ -238,7 +237,11 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 							str := p.blkSuffix.Text()
 							split := strings.Split(str, " ")
 							for _, s := range split {
-								config.ConfigPtr.WhiteListSuffix = append(config.ConfigPtr.WhiteListSuffix, s)
+								for _, suffix := range config.ConfigPtr.WhiteListSuffix {
+									if s != suffix {
+										config.ConfigPtr.WhiteListSuffix = append(config.ConfigPtr.WhiteListSuffix, s)
+									}
+								}
 							}
 							config.ConfigPtr.WriteConfig()
 						}
@@ -283,21 +286,13 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 							str := p.delayTime.Text()
 							minute, err := stringToInt(str)
 							if err != nil {
-								bigText := material.H1(th, "错误")
-								size := 2 * gtx.Metric.SpToDp(bigText.TextSize)
-								p.App.NewWindow("err",
-									WidgetView(func(gtx layout.Context, th *material.Theme) layout.Dimensions {
-										p.delayTime.SetText("")
-										return layout.Center.Layout(gtx, material.Body2(th, "输入整数格式错误，请重新输入").Layout)
-									}),
-									app.Size(size, size),
-								)
+								p.delayTime.SetText("")
+								p.showErrDialog("err", "请输入一个有效的整数")
 							} else {
 								config.ConfigPtr.DelayMinutes = minute
 								config.ConfigPtr.WriteConfig()
 								fmt.Println(minute)
 							}
-							//config.ConfigPtr.WriteConfig()
 						}
 						// 设置按钮的最小和最大宽度
 						btn := material.Button(th, &p.submitDelayBtn, "确认")
@@ -407,4 +402,20 @@ func NewApplication(ctx context.Context) *Application {
 // Wait waits for all windows to close.
 func (a *Application) Wait() {
 	a.active.Wait()
+}
+
+// showErrDialog
+//
+//	@Description: 显示错误弹窗
+//	@receiver p   页面指针
+//	@param title  窗口标题
+//	@param info   提示内容
+func (p *Page) showErrDialog(title, info string) {
+	p.App.NewWindow(title,
+		WidgetView(func(gtx layout.Context, th *material.Theme) layout.Dimensions {
+
+			return layout.Center.Layout(gtx, material.Body2(th, info).Layout)
+		}),
+		//app.Size(size, size),
+	)
 }

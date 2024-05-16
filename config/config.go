@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"gioui.org/app"
 	"os"
 )
 
@@ -15,6 +16,7 @@ type Config struct {
 	WhiteListDir      []string
 	WhiteListFilename []string
 	WhiteListSuffix   []string
+	Win               *app.Window
 }
 
 var ConfigPtr = &Config{}
