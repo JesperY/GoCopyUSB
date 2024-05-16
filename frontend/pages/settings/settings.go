@@ -1,9 +1,12 @@
 package settings
 
 import (
+	"context"
 	"fmt"
 	"gioui.org/app"
 	"gioui.org/example/component/icon"
+	"gioui.org/font/gofont"
+	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/text"
@@ -18,9 +21,9 @@ import (
 	"github.com/ncruces/zenity"
 	"image/color"
 	"log"
-	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type Page struct {
@@ -40,6 +43,7 @@ type Page struct {
 	inputAlignment2 text.Alignment
 	dialogOpen      bool
 	closeDialogBtn  widget.Clickable
+	App             *Application
 }
 
 func (p Page) Actions() []component.AppBarAction {
@@ -52,7 +56,9 @@ func (p Page) Overflow() []component.OverflowAction {
 
 func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions {
 	p.List.Axis = layout.Vertical
-
+	ctx := context.Background()
+	a := NewApplication(ctx)
+	p.App = a
 	return material.List(th, &p.List).Layout(gtx, 1, func(gtx layout.Context, _ int) layout.Dimensions {
 		return layout.Flex{
 			Alignment: layout.Middle,
@@ -166,7 +172,6 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 							}),
 						)
 					}),
-					// todo 把下面的文本框往右边移一点
 					// 在右侧添加一个带边框且固定大小的可滚动文本框
 					layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
 
@@ -248,6 +253,13 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 					}),
 				)
 			}),
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				var suffixStr string
+				for _, suffix := range config.ConfigPtr.WhiteListSuffix {
+					suffixStr += suffix + ","
+				}
+				return alo.DefaultInset.Layout(gtx, material.Body2(th, fmt.Sprintf(`当前黑名单后缀：%s`, suffixStr)).Layout)
+			}),
 			// 添加一些空格
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				spacerWidth := unit.Dp(20)
@@ -271,13 +283,21 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 							str := p.delayTime.Text()
 							minute, err := stringToInt(str)
 							if err != nil {
-								go p.showErrorWindow(th, "输入错误", "请输入一个有效的整数")
+								bigText := material.H1(th, "错误")
+								size := 2 * gtx.Metric.SpToDp(bigText.TextSize)
+								p.App.NewWindow("err",
+									WidgetView(func(gtx layout.Context, th *material.Theme) layout.Dimensions {
+										p.delayTime.SetText("")
+										return layout.Center.Layout(gtx, material.Body2(th, "输入整数格式错误，请重新输入").Layout)
+									}),
+									app.Size(size, size),
+								)
 							} else {
 								config.ConfigPtr.DelayMinutes = minute
 								config.ConfigPtr.WriteConfig()
 								fmt.Println(minute)
 							}
-							config.ConfigPtr.WriteConfig()
+							//config.ConfigPtr.WriteConfig()
 						}
 						// 设置按钮的最小和最大宽度
 						btn := material.Button(th, &p.submitDelayBtn, "确认")
@@ -314,40 +334,77 @@ func stringToInt(s string) (int, error) {
 	return i, nil
 }
 
-// 弹窗提示
-func (p *Page) showErrorWindow(th *material.Theme, title, message string) {
+// Application keeps track of all the windows and global state.
+type Application struct {
+	// Context is used to broadcast application shutdown.
+	Context context.Context
+	// Shutdown shuts down all windows.
+	Shutdown func()
+	// active keeps track the open windows, such that application
+	// can shut down, when all of them are closed.
+	active sync.WaitGroup
+}
+
+// NewWindow creates a new tracked window.
+func (a *Application) NewWindow(title string, view View, opts ...app.Option) {
+	opts = append(opts, app.Title(title), app.Size(unit.Dp(200), unit.Dp(100)))
+
+	a.active.Add(1)
 	go func() {
-		w := new(app.Window)
-		w.Option(app.Title(title),
-			app.Size(unit.Dp(300), unit.Dp(200)))
-		for {
-			switch e := w.Event().(type) {
-			case app.DestroyEvent:
-				return
-			case app.FrameEvent:
-				gtx := app.NewContext(&op.Ops{}, e)
-				layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-					return layout.Flex{
-						Axis: layout.Vertical,
-					}.Layout(gtx,
-						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							return material.H6(th, title).Layout(gtx)
-						}),
-						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							return material.Body1(th, message).Layout(gtx)
-						}),
-						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							var closeBtn widget.Clickable
-							btn := material.Button(th, &closeBtn, "关闭")
-							if closeBtn.Clicked(gtx) {
-								os.Exit(0)
-							}
-							return layout.Inset{Top: unit.Dp(8)}.Layout(gtx, btn.Layout)
-						}),
-					)
-				})
-				e.Frame(gtx.Ops)
-			}
+		defer a.active.Done()
+
+		w := &Window{
+			App:    a,
+			Window: new(app.Window),
 		}
+		w.Window.Option(opts...)
+		view.Run(w)
 	}()
+}
+
+type View interface {
+	// Run handles the window event loop.
+	Run(w *Window) error
+}
+type Window struct {
+	App *Application
+	*app.Window
+}
+
+// WidgetView allows to use layout.Widget as a view.
+type WidgetView func(gtx layout.Context, th *material.Theme) layout.Dimensions
+
+// Run displays the widget with default handling.
+func (view WidgetView) Run(w *Window) error {
+	var ops op.Ops
+
+	th := material.NewTheme()
+	th.Shaper = text.NewShaper(text.WithCollection(gofont.Collection()))
+
+	go func() {
+		<-w.App.Context.Done()
+		w.Perform(system.ActionClose)
+	}()
+	for {
+		switch e := w.Event().(type) {
+		case app.DestroyEvent:
+			return e.Err
+		case app.FrameEvent:
+			gtx := app.NewContext(&ops, e)
+			view(gtx, th)
+			e.Frame(gtx.Ops)
+		}
+	}
+}
+func NewApplication(ctx context.Context) *Application {
+	ctx, cancel := context.WithCancel(ctx)
+	return &Application{
+		Context:  ctx,
+		Shutdown: cancel,
+	}
+}
+
+// Wait waits for all windows to close.
+func (a *Application) Wait() {
+	a.active.Wait()
 }
