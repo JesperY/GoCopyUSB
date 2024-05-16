@@ -5,6 +5,7 @@ import (
 	"github.com/JesperY/GoCopyUSB/frontend/assets/icon"
 	"github.com/JesperY/GoCopyUSB/frontend/home"
 	"github.com/getlantern/systray"
+	"os"
 )
 
 func SysTrayRun() {
@@ -26,8 +27,10 @@ func OnReady() {
 	go func() {
 		<-mQuit.ClickedCh
 		systray.Quit()
+		os.Exit(0)
 	}()
 }
 func OnExit() {
 	systray.Quit()
+	os.Exit(0)
 }
