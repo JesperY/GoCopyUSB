@@ -6,6 +6,7 @@ import (
 	"gioui.org/font/gofont"
 	"gioui.org/op"
 	"gioui.org/text"
+	"gioui.org/unit"
 	"gioui.org/widget/material"
 	"github.com/JesperY/GoCopyUSB/config"
 	page "github.com/JesperY/GoCopyUSB/frontend/pages"
@@ -15,6 +16,7 @@ import (
 
 func OpenMainWindow() {
 	window := new(app.Window)
+	window.Option(app.Title(config.ConfigPtr.Title), app.Size(unit.Dp(config.ConfigPtr.Width), unit.Dp(config.ConfigPtr.Height)))
 	config.ConfigPtr.Win = window
 	fmt.Println("当前win的值是", config.ConfigPtr.Win == nil)
 	if err := loop(window); err != nil {

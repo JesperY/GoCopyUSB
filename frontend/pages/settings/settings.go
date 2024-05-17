@@ -35,15 +35,16 @@ type Page struct {
 	app.Window
 	*page.Router
 	widget.List
-	textList        widget.List
-	text            []string
-	blkSuffix       component.TextField
-	delayTime       component.TextField
-	inputAlignment  text.Alignment
-	inputAlignment2 text.Alignment
-	dialogOpen      bool
-	closeDialogBtn  widget.Clickable
-	App             *Application
+	textList          widget.List
+	text              []string
+	blkSuffix         component.TextField
+	delayTime         component.TextField
+	inputAlignment    text.Alignment
+	inputAlignment2   text.Alignment
+	dialogOpen        bool
+	closeDialogBtn    widget.Clickable
+	App               *Application
+	autoLaunchTrigger widget.Bool
 }
 
 func (p Page) Actions() []component.AppBarAction {
@@ -304,6 +305,26 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 						})
 					}),
 				)
+			}),
+			// 添加一些空格
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				spacerWidth := unit.Dp(20)
+				return layout.Spacer{Width: spacerWidth, Height: unit.Dp(10)}.Layout(gtx)
+			}),
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				return alo.DetailRow{}.Layout(gtx,
+					material.Body1(th, "是否开机自启动").Layout,
+					func(gtx layout.Context) layout.Dimensions {
+						if p.autoLaunchTrigger.Update(gtx) {
+							if p.autoLaunchTrigger.Value {
+								config.ConfigPtr.AutoStartUp = true
+							} else {
+								config.ConfigPtr.AutoStartUp = true
+							}
+							config.ConfigPtr.WriteConfig()
+						}
+						return material.Switch(th, &p.autoLaunchTrigger, "是否开机自启动").Layout(gtx)
+					})
 			}),
 		)
 	})
