@@ -3,11 +3,18 @@
 "Width": 600,
 "Height": 400,
 "Title": "USBCopier",
-  "DelayMinutes": 0,
+"DelayMinutes": 0,
 "WhiteListDir": [
-"dir1/",
-"dir2/"
+"C:\\Users\\Jesper\\Documents\\iZotope",
+"G:\\Document\\长江大学-结课作业\\环境地理信息系统"
 ],
-  "WhiteListFilename": ["filename1", "filename2"],
-  "WhiteListSuffix": [".suffix1", ".suffix2"]
+"WhiteListFilename": [
+"filename1",
+"filename2"
+],
+"WhiteListSuffix": [
+".suffix1",
+".suffix2"
+],
+  "AutoStartUp": false
 }
