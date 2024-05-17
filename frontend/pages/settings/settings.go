@@ -27,11 +27,12 @@ import (
 )
 
 type Page struct {
-	chooseDirBtn   widget.Clickable
-	chooseBlkBtn   widget.Clickable
-	clearBlkBtn    widget.Clickable
-	submitSufBtn   widget.Clickable
-	submitDelayBtn widget.Clickable
+	chooseDirBtn      widget.Clickable
+	chooseBlkBtn      widget.Clickable
+	clearBlkBtn       widget.Clickable
+	submitSufBtn      widget.Clickable
+	submitDelayBtn    widget.Clickable
+	submitFileNameBtn widget.Clickable
 	app.Window
 	*page.Router
 	widget.List
@@ -263,6 +264,54 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 					suffixStr += suffix + ","
 				}
 				return alo.DefaultInset.Layout(gtx, material.Body2(th, fmt.Sprintf(`当前黑名单后缀：%s`, suffixStr)).Layout)
+			}), // 添加一些空格
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				spacerWidth := unit.Dp(20)
+				return layout.Spacer{Width: spacerWidth, Height: unit.Dp(10)}.Layout(gtx)
+			}),
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				return layout.Flex{
+					Axis: layout.Horizontal,
+				}.Layout(gtx,
+					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+						return layout.Inset{Right: unit.Dp(8)}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+							return layout.Dimensions{Size: gtx.Constraints.Min}
+						})
+					}),
+					layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
+						p.delayTime.Alignment = p.inputAlignment2
+						return p.delayTime.Layout(gtx, th, `请在此输入不想备份的文件名，以空格隔开`)
+					}),
+					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+						if p.submitFileNameBtn.Clicked(gtx) {
+							str := p.blkSuffix.Text()
+							split := strings.Split(str, " ")
+							for _, s := range split {
+								for _, suffix := range config.ConfigPtr.WhiteListFilename {
+									if s != suffix {
+										config.ConfigPtr.WhiteListSuffix = append(config.ConfigPtr.WhiteListFilename, s)
+									}
+								}
+							}
+							config.ConfigPtr.WriteConfig()
+						}
+						// 设置按钮的最小和最大宽度
+						btn := material.Button(th, &p.submitFileNameBtn, "确认")
+						//btnSize := layout.Dimensions{Size: gtx.Constraints.Min}
+						return layout.Inset{Left: unit.Dp(8), Right: unit.Dp(8), Top: unit.Dp(12)}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+							gtx.Constraints.Min.X = gtx.Dp(80)
+							gtx.Constraints.Max.X = gtx.Dp(80)
+							return btn.Layout(gtx)
+						})
+					}),
+				)
+			}),
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				var fileStr string
+				for _, file := range config.ConfigPtr.WhiteListFilename {
+					fileStr += file + ","
+				}
+				return alo.DefaultInset.Layout(gtx, material.Body2(th, fmt.Sprintf(`当前黑名单文件：%s`, fileStr)).Layout)
 			}),
 			// 添加一些空格
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
