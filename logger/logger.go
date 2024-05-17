@@ -1,4 +1,4 @@
-package copylogger
+package logger
 
 import (
 	"github.com/natefinch/lumberjack"

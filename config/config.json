@@ -1,12 +1,12 @@
 {
-"TargetDir": "D:\\",
+"TargetDir": "E:\\Document\\GoUSBCopy",
 "Width": 600,
 "Height": 400,
 "Title": "USBCopier",
 "DelayMinutes": 0,
 "WhiteListDir": [
-"C:\\Users\\Jesper\\Documents\\iZotope",
-"G:\\Document\\长江大学-结课作业\\环境地理信息系统"
+"G:\\ISO",
+"H:\\"
 ],
 "WhiteListFilename": [
 "filename1",
@@ -16,5 +16,6 @@
 ".suffix1",
 ".suffix2"
 ],
-  "AutoStartUp": false
+"Win": {},
+"AutoStartUp": false
 }

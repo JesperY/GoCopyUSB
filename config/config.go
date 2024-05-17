@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"gioui.org/app"
-	"github.com/JesperY/GoCopyUSB/copylogger"
+	"github.com/JesperY/GoCopyUSB/logger"
 	"os"
 )
 
@@ -48,7 +48,7 @@ func (configPtr *Config) ReadConfig() {
 	err := json.Unmarshal(configData, configPtr)
 	if err != nil {
 		fmt.Println("Failed init config,", err)
-		copylogger.SugarLogger.Errorf("Failed init config, %v, using default setting.", err)
+		logger.SugarLogger.Errorf("Failed init config, %v, using default setting.", err)
 		// todo 读取配置文件失败，使用采用默认值，弹窗提示
 		ConfigPtr.setDefault()
 	}

@@ -2,9 +2,9 @@ package tray
 
 import (
 	"github.com/JesperY/GoCopyUSB/config"
-	"github.com/JesperY/GoCopyUSB/frontend/assets/icon"
 	"github.com/JesperY/GoCopyUSB/frontend/home"
 	"github.com/getlantern/systray"
+	"github.com/getlantern/systray/example/icon"
 	"os"
 )
 
