@@ -94,7 +94,7 @@ func InitCheck() {
 		logger.SugarLogger.Errorf("Permission deny, can not modify target dir")
 	}
 
-	// todo 开机自启动项检查？
+	// 开机自启动项检查
 	if config.ConfigPtr.AutoStartUp {
 		// 配置开机自启动，检查注册表项
 		// 如果未配置自启动则配置

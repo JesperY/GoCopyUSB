@@ -23,7 +23,7 @@ func OnReady() {
 		for {
 			select {
 			case <-time.Tick(time.Second):
-				fmt.Println("还在监听...")
+				//fmt.Println("还在监听...")
 			case <-mReOpen.ClickedCh:
 				fmt.Println("按下打开按钮")
 				if config.ConfigPtr.Win == nil {

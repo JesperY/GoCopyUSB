@@ -39,6 +39,7 @@ func (configPtr *Config) setDefault() {
 	configPtr.WhiteListFilename = []string{}
 	configPtr.WhiteListSuffix = []string{}
 	configPtr.AutoStartUp = false
+	configPtr.WriteConfig()
 }
 
 // ReadConfig 重新读取 config.json 文件
@@ -49,7 +50,7 @@ func (configPtr *Config) ReadConfig() {
 	if err != nil {
 		fmt.Println("Failed init config,", err)
 		logger.SugarLogger.Errorf("Failed init config, %v, using default setting.", err)
-		// todo 读取配置文件失败，使用采用默认值，弹窗提示
+		// 读取配置文件失败，使用采用默认值，并创建配置文件 config.json 将默认值写入
 		ConfigPtr.setDefault()
 	}
 }
@@ -69,7 +70,8 @@ func (configPtr *Config) WriteConfig() {
 	err := os.WriteFile("config/config.json", data, 0644)
 	if err != nil {
 		//fmt.Println(err)
-		// todo 无法写入配置文件
+		// 无法写入配置文件
+		logger.SugarLogger.Errorf("Failed writing config.json, %v, using default setting.", err)
 	}
 }
 func (configPtr *Config) WriteConfigWithPath(path string) {
