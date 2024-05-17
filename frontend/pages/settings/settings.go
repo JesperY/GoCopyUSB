@@ -33,6 +33,9 @@ type Page struct {
 	submitSufBtn      widget.Clickable
 	submitDelayBtn    widget.Clickable
 	submitFileNameBtn widget.Clickable
+	clearSufBtn       widget.Clickable
+	clearDelayBtn     widget.Clickable
+	clearFileNameBtn  widget.Clickable
 	app.Window
 	*page.Router
 	widget.List
@@ -40,6 +43,7 @@ type Page struct {
 	text              []string
 	blkSuffix         component.TextField
 	delayTime         component.TextField
+	blkFile           component.TextField
 	inputAlignment    text.Alignment
 	inputAlignment2   text.Alignment
 	dialogOpen        bool
@@ -94,12 +98,52 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 			}),
 			// 水平排列黑名单按钮和文本框
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				return layout.Flex{Axis: layout.Horizontal}.Layout(gtx,
+				return layout.Flex{Axis: layout.Horizontal}.Layout(gtx, // 在右侧添加一个带边框且固定大小的可滚动文本框
+					layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
+
+						border := widget.Border{
+							Color:        color.NRGBA{R: 0, G: 0, B: 0, A: 255},
+							CornerRadius: unit.Dp(4),
+							Width:        unit.Dp(0.5),
+						}
+						return layout.Inset{Left: unit.Dp(8), Right: unit.Dp(8)}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+							return border.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+								// 使用 layout.Stack 来确保内容和滚动条正确布局
+								return layout.Stack{}.Layout(gtx, layout.Expanded(func(gtx layout.Context) layout.Dimensions {
+									p.textList.Axis = layout.Vertical
+									// 设置文本框的大小
+									textboxWidth := gtx.Constraints.Max.X
+									textboxHeight := gtx.Dp(unit.Dp(150))
+									gtx.Constraints.Min.X = textboxWidth
+									gtx.Constraints.Min.Y = textboxHeight
+									gtx.Constraints.Max.Y = textboxHeight
+									return material.List(th, &p.textList).Layout(gtx, len(config.ConfigPtr.WhiteListDir), func(gtx layout.Context, index int) layout.Dimensions {
+										return layout.Stack{}.Layout(gtx,
+											layout.Stacked(func(gtx layout.Context) layout.Dimensions {
+												// 设置行高
+												gtx.Constraints.Min.Y = gtx.Dp(unit.Dp(30))
+												gtx.Constraints.Max.Y = gtx.Dp(unit.Dp(30))
+												gtx.Constraints.Min.X = textboxWidth - gtx.Dp(unit.Dp(2))*2 // 减去边框的宽度
+												gtx.Constraints.Max.X = textboxWidth - gtx.Dp(unit.Dp(2))*2
+												insets := layout.UniformInset(unit.Dp(0))
+												return insets.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+													return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+														return material.Body1(th, config.ConfigPtr.WhiteListDir[index]).Layout(gtx)
+													})
+												})
+											}),
+										)
+									})
+								}))
+							})
+						})
+					}),
 					// 垂直排列两个按钮
 					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 						return layout.Flex{
 							Axis: layout.Vertical,
 						}.Layout(gtx,
+
 							// 第一个黑名单按钮
 							layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 								// 固定按钮宽度和高度
@@ -174,46 +218,6 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 							}),
 						)
 					}),
-					// 在右侧添加一个带边框且固定大小的可滚动文本框
-					layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
-
-						border := widget.Border{
-							Color:        color.NRGBA{R: 0, G: 0, B: 0, A: 255},
-							CornerRadius: unit.Dp(4),
-							Width:        unit.Dp(2),
-						}
-						return layout.Inset{Left: unit.Dp(75), Right: unit.Dp(8)}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-							return border.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-								// 使用 layout.Stack 来确保内容和滚动条正确布局
-								return layout.Stack{}.Layout(gtx, layout.Expanded(func(gtx layout.Context) layout.Dimensions {
-									p.textList.Axis = layout.Vertical
-									// 设置文本框的大小
-									textboxWidth := gtx.Constraints.Max.X
-									textboxHeight := gtx.Dp(unit.Dp(150))
-									gtx.Constraints.Min.X = textboxWidth
-									gtx.Constraints.Min.Y = textboxHeight
-									gtx.Constraints.Max.Y = textboxHeight
-									return material.List(th, &p.textList).Layout(gtx, len(config.ConfigPtr.WhiteListDir), func(gtx layout.Context, index int) layout.Dimensions {
-										return layout.Stack{}.Layout(gtx,
-											layout.Stacked(func(gtx layout.Context) layout.Dimensions {
-												// 设置行高
-												gtx.Constraints.Min.Y = gtx.Dp(unit.Dp(30))
-												gtx.Constraints.Max.Y = gtx.Dp(unit.Dp(30))
-												gtx.Constraints.Min.X = textboxWidth - gtx.Dp(unit.Dp(2))*2 // 减去边框的宽度
-												gtx.Constraints.Max.X = textboxWidth - gtx.Dp(unit.Dp(2))*2
-												insets := layout.UniformInset(unit.Dp(0))
-												return insets.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-													return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-														return material.Body1(th, config.ConfigPtr.WhiteListDir[index]).Layout(gtx)
-													})
-												})
-											}),
-										)
-									})
-								}))
-							})
-						})
-					}),
 				)
 			}),
 			// 添加一些空格
@@ -236,19 +240,38 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 					}),
 					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 						if p.submitSufBtn.Clicked(gtx) {
+							var exist bool = false
 							str := p.blkSuffix.Text()
 							split := strings.Split(str, " ")
 							for _, s := range split {
 								for _, suffix := range config.ConfigPtr.WhiteListSuffix {
-									if s != suffix {
-										config.ConfigPtr.WhiteListSuffix = append(config.ConfigPtr.WhiteListSuffix, s)
+									if s == suffix {
+										exist = true
 									}
+								}
+								if !exist {
+									config.ConfigPtr.WhiteListSuffix = append(config.ConfigPtr.WhiteListSuffix, s)
 								}
 							}
 							config.ConfigPtr.WriteConfig()
 						}
 						// 设置按钮的最小和最大宽度
 						btn := material.Button(th, &p.submitSufBtn, "确认")
+						//btnSize := layout.Dimensions{Size: gtx.Constraints.Min}
+						return layout.Inset{Left: unit.Dp(8), Right: unit.Dp(8), Top: unit.Dp(12)}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+							gtx.Constraints.Min.X = gtx.Dp(80)
+							gtx.Constraints.Max.X = gtx.Dp(80)
+							return btn.Layout(gtx)
+						})
+					}),
+					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+						if p.clearSufBtn.Clicked(gtx) {
+							config.ConfigPtr.WhiteListSuffix = nil
+							config.ConfigPtr.WriteConfig()
+							p.Window.Invalidate()
+						}
+						// 设置按钮的最小和最大宽度
+						btn := material.Button(th, &p.clearSufBtn, "清空")
 						//btnSize := layout.Dimensions{Size: gtx.Constraints.Min}
 						return layout.Inset{Left: unit.Dp(8), Right: unit.Dp(8), Top: unit.Dp(12)}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 							gtx.Constraints.Min.X = gtx.Dp(80)
@@ -279,17 +302,17 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 						})
 					}),
 					layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
-						p.delayTime.Alignment = p.inputAlignment2
-						return p.delayTime.Layout(gtx, th, `请在此输入不想备份的文件名，以空格隔开`)
+						p.blkFile.Alignment = p.inputAlignment2
+						return p.blkFile.Layout(gtx, th, `请在此输入不想备份的文件名，以空格隔开`)
 					}),
 					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 						if p.submitFileNameBtn.Clicked(gtx) {
-							str := p.blkSuffix.Text()
+							str := p.blkFile.Text()
 							split := strings.Split(str, " ")
 							for _, s := range split {
 								for _, suffix := range config.ConfigPtr.WhiteListFilename {
 									if s != suffix {
-										config.ConfigPtr.WhiteListSuffix = append(config.ConfigPtr.WhiteListFilename, s)
+										config.ConfigPtr.WhiteListFilename = append(config.ConfigPtr.WhiteListFilename, s)
 									}
 								}
 							}
@@ -297,6 +320,21 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 						}
 						// 设置按钮的最小和最大宽度
 						btn := material.Button(th, &p.submitFileNameBtn, "确认")
+						//btnSize := layout.Dimensions{Size: gtx.Constraints.Min}
+						return layout.Inset{Left: unit.Dp(8), Right: unit.Dp(8), Top: unit.Dp(12)}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+							gtx.Constraints.Min.X = gtx.Dp(80)
+							gtx.Constraints.Max.X = gtx.Dp(80)
+							return btn.Layout(gtx)
+						})
+					}),
+					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+						if p.clearFileNameBtn.Clicked(gtx) {
+							config.ConfigPtr.WhiteListFilename = nil
+							config.ConfigPtr.WriteConfig()
+							p.Window.Invalidate()
+						}
+						// 设置按钮的最小和最大宽度
+						btn := material.Button(th, &p.clearFileNameBtn, "清空")
 						//btnSize := layout.Dimensions{Size: gtx.Constraints.Min}
 						return layout.Inset{Left: unit.Dp(8), Right: unit.Dp(8), Top: unit.Dp(12)}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 							gtx.Constraints.Min.X = gtx.Dp(80)
@@ -364,6 +402,11 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 				return alo.DetailRow{}.Layout(gtx,
 					material.Body1(th, "是否开机自启动").Layout,
 					func(gtx layout.Context) layout.Dimensions {
+						if config.ConfigPtr.AutoStartUp == true {
+							p.autoLaunchTrigger.Value = true
+						} else {
+							p.autoLaunchTrigger.Value = false
+						}
 						if p.autoLaunchTrigger.Update(gtx) {
 							if p.autoLaunchTrigger.Value {
 								config.ConfigPtr.AutoStartUp = true
