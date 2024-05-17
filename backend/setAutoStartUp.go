@@ -2,7 +2,7 @@ package backend
 
 import (
 	"github.com/JesperY/GoCopyUSB/config"
-	"github.com/JesperY/GoCopyUSB/copylogger"
+	"github.com/JesperY/GoCopyUSB/logger"
 	"golang.org/x/sys/windows/registry"
 	"os"
 )
@@ -14,7 +14,7 @@ func EnableAutoStartUp() {
 	if err != nil {
 		// todo 无法打开注册表项，弹窗
 		//return fmt.Errorf("error opening registry key: %w", err)
-		copylogger.SugarLogger.Errorf("Error opening registry key: %v", err)
+		logger.SugarLogger.Errorf("Error opening registry key: %v", err)
 	} else {
 		// 确保 key 不为 nil 时调用 close()
 		defer key.Close()
@@ -24,14 +24,14 @@ func EnableAutoStartUp() {
 	if err != nil {
 		//return fmt.Errorf("error getting executable path: %w", err)
 		// todo 无法设置可执行文件路径，弹窗
-		copylogger.SugarLogger.Errorf("Error getting executable path: %v", err)
+		logger.SugarLogger.Errorf("Error getting executable path: %v", err)
 	}
 
 	err = key.SetStringValue(registryName, executablePath)
 	if err != nil {
 		//return fmt.Errorf("error setting registry value: %w", err)
 		// todo 无法设置注册表项，弹窗
-		copylogger.SugarLogger.Errorf("Error setting registry value: %v", err)
+		logger.SugarLogger.Errorf("Error setting registry value: %v", err)
 	}
 }
 
@@ -40,7 +40,7 @@ func DisableAutoStartUp() {
 	if err != nil {
 		// todo 无法打开注册表项，弹窗
 		//return fmt.Errorf("error opening registry key: %w", err)
-		copylogger.SugarLogger.Errorf("Error opening registry key: %v", err)
+		logger.SugarLogger.Errorf("Error opening registry key: %v", err)
 	} else {
 		defer key.Close()
 	}
@@ -49,7 +49,7 @@ func DisableAutoStartUp() {
 	if err != nil {
 		//return fmt.Errorf("error deleting registry value: %w", err)
 		// todo 无法删除注册表项，弹窗
-		copylogger.SugarLogger.Errorf("Error deleting registry value: %v", err)
+		logger.SugarLogger.Errorf("Error deleting registry value: %v", err)
 	}
 }
 
@@ -58,7 +58,7 @@ func IsAutoStartUp() bool {
 	key, err := registry.OpenKey(registry.CURRENT_USER, `SOFTWARE\Microsoft\Windows\CurrentVersion\Run`, registry.READ)
 	if err != nil {
 		//fmt.Println("Error opening registry key:", err)
-		copylogger.SugarLogger.Errorf("Error opening registry key: %v", err)
+		logger.SugarLogger.Errorf("Error opening registry key: %v", err)
 		return false
 	} else {
 		defer key.Close()
@@ -68,11 +68,11 @@ func IsAutoStartUp() bool {
 	val, _, err := key.GetStringValue(registryName)
 	if err != nil {
 		//fmt.Println("USBCopier is not set to auto start.")
-		copylogger.SugarLogger.Infof("USBCopier is not set to auto start. %v", err)
+		logger.SugarLogger.Infof("USBCopier is not set to auto start. %v", err)
 		return false
 	} else {
 		//fmt.Println("USBCopier is set to auto start with value:", val)
-		copylogger.SugarLogger.Infof("USBCopier is set to auto start with value: %v", val)
+		logger.SugarLogger.Infof("USBCopier is set to auto start with value: %v", val)
 		return true
 	}
 }
@@ -85,13 +85,13 @@ func InitCheck() {
 		err := os.Mkdir(targetPath, 0777)
 		if err != nil {
 			// todo 没有创建权限，无法继续，弹窗
-			copylogger.SugarLogger.Errorf("Permission deny, can not create target dir, %v", err)
+			logger.SugarLogger.Errorf("Permission deny, can not create target dir, %v", err)
 			return
 		}
 	}
 	if fileInfo.Mode().Perm()&os.ModePerm == 0 {
 		// todo 没有修改权限，无法继续，弹窗
-		copylogger.SugarLogger.Errorf("Permission deny, can not modify target dir")
+		logger.SugarLogger.Errorf("Permission deny, can not modify target dir")
 	}
 
 	// todo 开机自启动项检查？

@@ -3,7 +3,7 @@ package backend
 import (
 	"fmt"
 	"github.com/JesperY/GoCopyUSB/config"
-	"github.com/JesperY/GoCopyUSB/copylogger"
+	"github.com/JesperY/GoCopyUSB/logger"
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
 	"io"
@@ -48,28 +48,31 @@ func copyFile(src, dst string) error {
 
 // 目录检查，通过返回 true，继续备份，未通过返回 false，跳过
 func checkDir(targetPath string, sourcePath string) bool {
-	// 1. 检查源目录是否为白名单目录
-	// 2. 检查目标目录是否已存在
-	_, err := os.Stat(targetPath)
-	// 当目标路径不存在且源路径不在白名单时，通过检查
-	// (!os.IsExist(err) || err == nil) 共同判定 targetPath 存在
-	// 这是因为 targetPath 存在时可能返回 nil，也可能返回非 ErrNotExist 的 err
-	// 但是 os.IsExist(nil) 返回 false 判定为不存在，因此需要额外判断 err == nil
-	if !IsWhiteDir(sourcePath) && !(err == nil || os.IsExist(err)) { // 注意短路，先判断 err == nil
+	// 检查源目录是否为白名单目录
+	// 源路径不在白名单时，通过检查
+	if !IsWhiteDir(sourcePath) { // 注意短路，先判断 err == nil
+		logger.SugarLogger.Infof("pass check dir: %s", sourcePath)
 		return true
+
 	} else {
+		logger.SugarLogger.Infof("check dir failed, ignore dir: %s", sourcePath)
 		return false
 	}
 }
 
 func checkFile(targetPath string, sourcePath string) bool {
-
+	// 如果目标文件不存在，通过检查
+	_, err := os.Stat(targetPath)
+	if os.IsNotExist(err) {
+		return true
+	}
 	// 获取后缀
-	suffix := filepath.Ext(targetPath)
+	suffix := filepath.Ext(sourcePath)
 	filename := filepath.Base(sourcePath)
 	filenameWithoutExt := strings.TrimSuffix(filename, suffix)
 	// 当文件名或文件后缀在白名单或源文件未更新，任一不通过检查，返回 false
 	if IsWhiteFilename(filenameWithoutExt) || IsWhiteSuffix(suffix) || !isUpdatedFile(targetPath, sourcePath) {
+		logger.SugarLogger.Infof("check file failed, ignore file: %s", sourcePath)
 		return false
 	}
 	return true
@@ -92,7 +95,7 @@ func doCopy(instance *ole.IDispatch) error {
 	*/
 	err := filepath.Walk(sourcePath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			copylogger.SugarLogger.Errorf("Failed walk dir: %v\n", err)
+			logger.SugarLogger.Errorf("Failed walk dir: %v\n", err)
 			return err
 		}
 		// 构建 targetFilePath 作为复制的目标路径
@@ -101,24 +104,40 @@ func doCopy(instance *ole.IDispatch) error {
 		// 如果遍历到的是目录，则创建对应目录，保持原权限
 		if info.IsDir() {
 			// 执行备份前检查
-			if !checkDir(targetFilePath, sourcePath) {
+			if !checkDir(targetFilePath, path) {
 				return filepath.SkipDir
+				//return nil
 			}
+
+			_, err := os.Stat(targetFilePath)
+			// 检查目标目录是否已存在
+			// (!os.IsExist(err) || err == nil) 共同判定 targetPath 存在
+			// 这是因为 targetPath 存在时可能返回 nil，也可能返回非 ErrNotExist 的 err
+			// 但是 os.IsExist(nil) 返回 false 判定为不存在，因此需要额外判断 err == nil
+			if err == nil || os.IsExist(err) {
+				// 目标路径已存在，不在重复创建
+				return nil
+			}
+			// todo 不同标识U盘创建不同 targetFilePath
+			logger.SugarLogger.Infof("make dir: %s\n", targetFilePath)
 			return os.MkdirAll(targetFilePath, info.Mode())
 		} else { // 遍历到文件则执行复制操作
 			// 备份前检查
-			if !checkFile(targetPath, sourcePath) {
-				return filepath.SkipDir
+			if !checkFile(targetFilePath, path) {
+				//return filepath.SkipDir
+				return nil
+			} else {
+				logger.SugarLogger.Infof("copy file from %s to %s", path, targetFilePath)
+				return copyFile(path, targetFilePath)
 			}
-			return copyFile(path, targetFilePath)
 		}
 	})
 
 	if err != nil {
-		copylogger.SugarLogger.Errorf("Failed copy file: %v\n", err)
+		logger.SugarLogger.Errorf("Failed copy file: %v\n", err)
 		//log.Println("Error copying files:", err)
 	} else {
-		copylogger.SugarLogger.Infof("\"All files copied successfully from %s", deviceId)
+		logger.SugarLogger.Infof("\"All files copied successfully from %s", deviceId)
 		//fmt.Println("All files copied successfully from", deviceId)
 	}
 	// TODO:优化 error 处理
@@ -132,7 +151,7 @@ func HandleEvent(eventSource *ole.IDispatch) {
 	eventRaw, err := oleutil.CallMethod(eventSource, "NextEvent", nil)
 	if err != nil {
 		//fmt.Println("Error getting next event:", err)
-		copylogger.SugarLogger.Errorf("Error getting next USB event: %v", err)
+		//logger.SugarLogger.Errorf("Error getting next USB event: %v", err)
 		return
 	}
 	event := eventRaw.ToIDispatch()
@@ -155,7 +174,7 @@ func HandleEvent(eventSource *ole.IDispatch) {
 	err = doCopy(instance)
 	if err != nil {
 		//fmt.Println("Error copying files:", err)
-		copylogger.SugarLogger.Errorf("Error copying files: %v", err)
+		logger.SugarLogger.Errorf("Error copying files: %v", err)
 		return
 	}
 
