@@ -1,5 +1,5 @@
 {
-"TargetDir": "E:\\Document\\GoUSBCopy",
+"TargetDir": "D:\\Document\\GoCopyUSB",
 "Width": 800,
 "Height": 620,
 "Title": "USBCopier",
@@ -14,7 +14,9 @@
 ],
 "WhiteListSuffix": [
 ".suffix1",
-".suffix2"
+".suffix2",
+".iso",
+".iso"
 ],
 "Win": {},
 "AutoStartUp": true
