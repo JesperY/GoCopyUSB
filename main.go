@@ -9,9 +9,11 @@ import (
 )
 
 func main() {
+	backend.InitCheck()
 	defer copylogger.SugarLogger.Sync()
 	go tray.SysTrayRun()
 	go backend.Listen()
+
 	go home.OpenMainWindow()
 	app.Main()
 	//UIInit()
