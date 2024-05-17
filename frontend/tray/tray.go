@@ -1,11 +1,13 @@
 package tray
 
 import (
+	"fmt"
 	"github.com/JesperY/GoCopyUSB/config"
 	"github.com/JesperY/GoCopyUSB/frontend/home"
 	"github.com/getlantern/systray"
 	"github.com/getlantern/systray/example/icon"
 	"os"
+	"time"
 )
 
 func SysTrayRun() {
@@ -18,16 +20,27 @@ func OnReady() {
 	systray.SetTooltip("A GODDAMN SOFTWARE!")
 	mReOpen := systray.AddMenuItem("打开主面板", "打开主面板")
 	go func() {
-		<-mReOpen.ClickedCh
-		if config.ConfigPtr.Win == nil {
-			home.OpenMainWindow()
+		for {
+			select {
+			case <-time.Tick(time.Second):
+				fmt.Println("还在监听...")
+			case <-mReOpen.ClickedCh:
+				fmt.Println("按下打开按钮")
+				if config.ConfigPtr.Win == nil {
+					home.OpenMainWindow()
+				}
+			}
 		}
 	}()
 	mQuit := systray.AddMenuItem("退出", "退出")
 	go func() {
-		<-mQuit.ClickedCh
-		systray.Quit()
-		os.Exit(0)
+		for {
+			select {
+			case <-mQuit.ClickedCh:
+				systray.Quit()
+				os.Exit(0)
+			}
+		}
 	}()
 }
 func OnExit() {

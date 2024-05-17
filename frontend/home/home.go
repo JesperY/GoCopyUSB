@@ -1,24 +1,25 @@
 package home
 
 import (
+	"fmt"
 	"gioui.org/app"
 	"gioui.org/font/gofont"
-	"gioui.org/io/system"
 	"gioui.org/op"
 	"gioui.org/text"
 	"gioui.org/widget/material"
 	"github.com/JesperY/GoCopyUSB/config"
 	page "github.com/JesperY/GoCopyUSB/frontend/pages"
 	"github.com/JesperY/GoCopyUSB/frontend/pages/settings"
-	"os"
+	"log"
 )
 
 func OpenMainWindow() {
 	window := new(app.Window)
 	config.ConfigPtr.Win = window
+	fmt.Println("当前win的值是", config.ConfigPtr.Win == nil)
 	if err := loop(window); err != nil {
+		log.Fatal(err)
 	}
-	os.Exit(0)
 }
 func loop(window *app.Window) error {
 	th := material.NewTheme()
@@ -31,8 +32,11 @@ func loop(window *app.Window) error {
 	for {
 		switch e := window.Event().(type) {
 		case app.DestroyEvent:
-			window.Perform(system.ActionClose)
+			//window.Perform(system.ActionClose)
+			fmt.Println("按下X按钮")
 			config.ConfigPtr.Win = nil
+			fmt.Println("当前win的值是", config.ConfigPtr.Win == nil)
+			return nil
 		case app.FrameEvent:
 			gtx := app.NewContext(&ops, e)
 			router.Layout(gtx, th)
