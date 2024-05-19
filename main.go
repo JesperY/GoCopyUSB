@@ -10,6 +10,7 @@ import (
 
 func main() {
 	// todo 重复运行检查
+	home.ErrorDialog("test", "errorTest")
 	//page := &settings.Page{}
 	//page.ShowErrDialog("test", "error test")
 	fileLock := backend.SingleCheck()
