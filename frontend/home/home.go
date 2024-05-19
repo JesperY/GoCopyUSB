@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gioui.org/app"
 	"gioui.org/font/gofont"
+	"gioui.org/io/system"
 	"gioui.org/op"
 	"gioui.org/text"
 	"gioui.org/unit"
@@ -56,17 +57,12 @@ func ErrorDialog(title, msg string) {
 	for {
 		switch e := window.Event().(type) {
 		case app.DestroyEvent:
-			//window.Perform(system.ActionClose)
-			fmt.Println("按下X按钮")
-			config.ConfigPtr.Win = nil
-			fmt.Println("当前win的值是", config.ConfigPtr.Win == nil)
+			window.Perform(system.ActionClose)
 		case app.FrameEvent:
 			gtx := app.NewContext(&ops, e)
 			msgBody := material.Body2(th, msg)
 			msgBody.Alignment = text.Middle
-			//layout.Spacer{Height: unit.Dp(100)}.Layout(gtx)
 			msgBody.Layout(gtx)
-			//layout.Spacer{Height: unit.Dp(100)}.Layout(gtx)
 			e.Frame(gtx.Ops)
 		}
 	}
