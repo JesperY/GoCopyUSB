@@ -9,6 +9,13 @@ import (
 )
 
 func main() {
+	// todo 重复运行检查
+	//page := &settings.Page{}
+	//page.ShowErrDialog("test", "error test")
+	fileLock := backend.SingleCheck()
+	if fileLock != nil {
+		defer fileLock.Unlock()
+	}
 	backend.InitCheck()
 	defer logger.SugarLogger.Sync()
 	go tray.SysTrayRun()

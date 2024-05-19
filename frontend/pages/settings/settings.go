@@ -375,7 +375,7 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 							minute, err := stringToInt(str)
 							if err != nil {
 								p.delayTime.SetText("")
-								p.showErrDialog("err", "请输入一个有效的整数")
+								p.ShowErrDialog("err", "请输入一个有效的整数")
 							} else {
 								config.ConfigPtr.DelayMinutes = minute
 								config.ConfigPtr.WriteConfig()
@@ -517,13 +517,13 @@ func (a *Application) Wait() {
 	a.active.Wait()
 }
 
-// showErrDialog
+// ShowErrDialog
 //
 //	@Description: 显示错误弹窗
 //	@receiver p   页面指针
 //	@param title  窗口标题
 //	@param info   提示内容
-func (p *Page) showErrDialog(title, info string) {
+func (p *Page) ShowErrDialog(title, info string) {
 	p.App.NewWindow(title,
 		WidgetView(func(gtx layout.Context, th *material.Theme) layout.Dimensions {
 

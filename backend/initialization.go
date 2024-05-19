@@ -3,6 +3,7 @@ package backend
 import (
 	"github.com/JesperY/GoCopyUSB/config"
 	"github.com/JesperY/GoCopyUSB/logger"
+	"github.com/gofrs/flock"
 	"golang.org/x/sys/windows/registry"
 	"os"
 )
@@ -76,7 +77,30 @@ func IsAutoStartUp() bool {
 		return true
 	}
 }
+
+func SingleCheck() *flock.Flock {
+	lockFile := "config/tmp.lock"
+	fileLock := flock.New(lockFile)
+
+	locked, err := fileLock.TryLock()
+	if err != nil {
+		//fmt.Printf("Failed to acquire lock: %v\n", err)
+		// todo 无法访问锁文件
+		logger.SugarLogger.Errorf("Failed to acquire lock: %v", err)
+		os.Exit(1)
+	}
+	if !locked {
+		//fmt.Println("Another instance of the program is already running.")
+		// todo 禁止重复运行，错误弹窗
+		logger.SugarLogger.Errorf("Another instance of USBCopier is running.")
+		os.Exit(1)
+	}
+	return fileLock
+	//defer fileLock.Unlock()
+}
+
 func InitCheck() {
+
 	// todo 目标目录检查
 	targetPath := config.ConfigPtr.TargetDir
 	fileInfo, err := os.Stat(targetPath)

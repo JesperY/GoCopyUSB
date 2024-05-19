@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"fmt"
 	"github.com/JesperY/GoCopyUSB/config"
 	"github.com/JesperY/GoCopyUSB/logger"
 	"github.com/go-ole/go-ole"
@@ -81,8 +80,18 @@ func checkFile(targetPath string, sourcePath string) bool {
 func doCopy(instance *ole.IDispatch) error {
 	// 获取 instance 的 DeviceID 属性并转为 String
 	deviceId := oleutil.MustGetProperty(instance, "DeviceID").ToString()
-	fmt.Printf("USB Drive inserted: %s\n", deviceId)
-
+	serialNumber, _ := oleutil.GetProperty(instance, "SerialNumber")
+	if serialNumber != nil {
+		serialNumberStr := serialNumber.ToString()
+		logger.SugarLogger.Infof("USB Drive serial number: %s\n", serialNumberStr)
+	}
+	pnpDeviceID, _ := oleutil.GetProperty(instance, "PNPDeviceID")
+	if pnpDeviceID != nil {
+		pnpDeviceIDStr := pnpDeviceID.ToString()
+		logger.SugarLogger.Infof("USB Drive detected: %s\n", pnpDeviceIDStr)
+	}
+	//fmt.Printf("USB Drive inserted: %s\n", deviceId)
+	logger.SugarLogger.Infof("USB Drive inserted: %s\n", deviceId)
 	sourcePath := deviceId + `\` // Assume the USB is mounted with a drive letter.
 	// 从 json 读取目标路径配置
 	targetPath := config.ConfigPtr.TargetDir
