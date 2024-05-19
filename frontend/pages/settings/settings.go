@@ -411,7 +411,7 @@ func (p *Page) Layout(gtx layout.Context, th *material.Theme) layout.Dimensions 
 							if p.autoLaunchTrigger.Value {
 								config.ConfigPtr.AutoStartUp = true
 							} else {
-								config.ConfigPtr.AutoStartUp = true
+								config.ConfigPtr.AutoStartUp = false
 							}
 							config.ConfigPtr.WriteConfig()
 						}
